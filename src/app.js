@@ -10,6 +10,11 @@ app.use(cors());
 app.use(express.json({limit:"16kb"}));
 app.use(express.urlencoded());
 
+//import router
+import UserRouter from './routes/user.route.js';
+
+app.use('/api/v1/user' , UserRouter)
+
 
 
 export default app;

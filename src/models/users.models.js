@@ -54,20 +54,21 @@ const UserSchema=new mongoose.Schema({
 }
 )
 
-//this middlware function tends to do some pre functionality befor eany action to take place
+//this middlware function tends to do some pre functionality before any action to take place
 // in this case if we want to save our user data , it will execute this pre function to encrypt tht password before saving the details
 UserSchema.pre("save" , async function(next){
     if(!this.isModified("password")) return next();
 
 
     //the bcrypt function takes two parameters oje is the thing that needs to be hashed and other is the salt value
-    this.password=bcrypt.hash(this.password , 10);
+    this.password=await bcrypt.hash(this.password , 10);
+    console.log(this.password);
     next();
 } )
 
 
 //we can alos create our own method , here in this case we will create the method to check whetehr the password entered is correect or not
-UserSchema.methods.isCorrectPasswordasync =async function(password){
+UserSchema.methods.isCorrectPassword =async function(password){
   //bcrypt compare function will check the whether is password is correct or not
   //compare(original password, encrypted password)
   return await bcrypt.compare(password, this.password);

@@ -14,7 +14,26 @@ const registrationSchema = z.object({
     password: z.string().min(8).nonempty({ message: "Password cannot be empty" })
   });
 
-    const registerUser=asyncHandler(async(req,res)=>{
+
+const generateAccessAndRefreshToken=async(userId)=>{
+    //find the user
+    try{
+    const user= await User.findById(userId);
+    const accessToken=user.createAccessToken();
+    const refreshToken=user.generateRefreshToken();
+    //refresh token will be saved in the database
+    user.refreshToken=refreshToken;
+    user.save({validateBeforeSave:false});
+
+    return {accessToken , refreshToken};
+    }
+    catch(error){
+        throw new ApiError(500 , "something went wrong while generating access and refresh token");
+    }
+}
+
+
+ const registerUser=asyncHandler(async(req,res)=>{
     
     const {username, fullName, email, password}=registrationSchema.parse(req.body);
     console.log("username:", username);
@@ -84,5 +103,77 @@ const registrationSchema = z.object({
     
 })
 
-export default registerUser;
+const loginUser=asyncHandler(async(req,res)=>{
+    //get data from the req
+    //check if user exists
+    //if exists , then check password
+    //give access and refresh token 
+    //send cookies
+
+
+    const {username , email , password}=registrationSchema.parse(req.body);
+    console.log(username);
+
+    if(!username || !email){
+        throw new ApiError(400, "username or email is required");
+    }
+
+    const user =await User.findOne({
+        $or:[{username}, {email}]
+    })
+
+    if(!user){
+        throw new ApiError(404, "user does not exist");
+    }
+
+    //if user exist , check whether the password is correct or not
+    //the methods that we created like isCorrectPassword etc , are the methods for the user not the mongoDb User model
+    const isPasswordValid=await user.isCorrectPassword(password);
+
+    if(!isPasswordValid){
+        throw new ApiError(401, "invalid user crendentials");
+    }
+
+    //password is validated , now generate access and refresh token
+    const {accessToken , refreshToken}=await generateAccessAndRefreshToken(user._id);
+
+    //since earlier user does not has refreshToken in it , now we'll have to add refreshToken 
+    //this loggedInUser will have refreshToken value present in it
+    const loggedInUser=await User.findOne(user._id);
+
+    //add cookies
+    //added security options in the cookie, 
+
+    const options=
+    {
+        httpOnly:true,
+        secure:true
+    }
+
+    res.status(200)
+    .cookie("AccessToken" , accessToken , options)
+    .cookie("RefreshToken" , refreshToken , options)
+    .json(
+        new ApiResponse(
+           200,
+            {
+                user:loggedInUser,
+                accessToken,
+                refreshToken
+
+            },
+            "User logged in successfully!"
+
+        )
+    )
+
+
+
+    
+
+})
+
+
+
+export {registerUser , loginUser};
 

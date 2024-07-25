@@ -111,10 +111,10 @@ const loginUser=asyncHandler(async(req,res)=>{
     //send cookies
 
 
-    const {username , email , password}=registrationSchema.parse(req.body);
+    const {username , email , password}=req.body;
     console.log(username);
 
-    if(!username || !email){
+    if(!(username || email)){
         throw new ApiError(400, "username or email is required");
     }
 

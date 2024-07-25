@@ -139,7 +139,7 @@ const loginUser=asyncHandler(async(req,res)=>{
 
     //since earlier user does not has refreshToken in it , now we'll have to add refreshToken 
     //this loggedInUser will have refreshToken value present in it
-    const loggedInUser=await User.findOne(user._id);
+    const loggedInUser=await User.findOne(user._id).select("-password -refreshToken");
 
     //add cookies
     //added security options in the cookie, 
@@ -171,9 +171,33 @@ const loginUser=asyncHandler(async(req,res)=>{
 
     
 
+}) 
+
+const logoutUser=asyncHandler(async(req,res)=>{
+    await User.findByIdAndUpdate(
+        req.user._id,{
+            $set:{
+                refreshToken:undefined
+            }
+        }
+    )
+
+    const options=
+    {
+        httpOnly:true,
+        secure:true
+    }
+
+    //remove cookies
+    res.status(200)
+    .clearCookies("accessToken" , options)
+    .clearCookies("refreshToken" , options)
+    .json(new ApiResponse(200 , {} , "User logged out"));
+
+
 })
 
 
 
-export {registerUser , loginUser};
+export {registerUser , loginUser , logoutUser};
 

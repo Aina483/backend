@@ -8,10 +8,11 @@ import { User } from "../models/users.models.js";
  export const  verifyJWT=asyncHandler(async(req,res,next)=>{
     //get the token from cookies
     try {
-        const token=req.cookie?.accessToken || req.header('Authorization')?.replace("Bearer " , "");
+        const token=req.cookies?.AccessToken || req.header("Authorization")?.replace("Bearer " , "");
+        console.log(token);
     
         if(!token){
-            throw new ApiError(401, "Unauthorized access");
+            throw new ApiError(401, "Unauthorized access ");
         }
     
         //if token exist then we need to verify the token
@@ -20,17 +21,18 @@ import { User } from "../models/users.models.js";
          */
     
          const decoded=jwt.verify(token , process.env.ACCESS_TOKEN_SECRET);
-         const user =await User.findById(decoded._id);
+         const user =await User.findById(decoded?._id);
     
          if(!user){
             throw new ApiError(401, "invalid access token");
          }
     
          req.user=user;
-         next();
-    
-    } catch (error) {
-        throw new ApiError(401 , "Invalid details");
+         next()
+
+    } 
+    catch (error) {
+        throw new ApiError(401 , error.message);
     }
 
 

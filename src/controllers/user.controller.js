@@ -25,6 +25,8 @@ const generateAccessAndRefreshToken=async(userId)=>{
     user.refreshToken=refreshToken;
     user.save({validateBeforeSave:false});
 
+    console.log(accessToken);
+
     return {accessToken , refreshToken};
     }
     catch(error){
@@ -112,7 +114,8 @@ const loginUser=asyncHandler(async(req,res)=>{
 
 
     const {username , email , password}=req.body;
-    console.log(username);
+    // console.log(username);
+    console.log(password);
 
     if(!(username || email)){
         throw new ApiError(400, "username or email is required");
@@ -190,9 +193,11 @@ const logoutUser=asyncHandler(async(req,res)=>{
 
     //remove cookies
     res.status(200)
-    .clearCookies("accessToken" , options)
-    .clearCookies("refreshToken" , options)
+    .clearCookie("AccessToken" , options)
+    .clearCookie("RefreshToken" , options)
     .json(new ApiResponse(200 , {} , "User logged out"));
+
+    // console.log(res);
 
 
 })

@@ -9,6 +9,7 @@ app.use(cors());
 //the limit is for adding limit to the server to get limited json, so that it doesn't crash
 app.use(express.json({limit:"16kb"}));
 app.use(express.urlencoded());
+app.use(cookieParser());
 
 //import router
 import UserRouter from './routes/user.route.js';

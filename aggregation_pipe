@@ -1,0 +1,7 @@
+aggregation pipeline is set of stages
+
+the output of one stage is passed as input to the other stage.
+
+
+if in one stage the documents is compressed by some grouping feature
+then the same group will be passed as input to the next stage

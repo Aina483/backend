@@ -313,8 +313,79 @@ const updateAvatar=asyncHandler(async(req,res)=>{
     .status(200)
     .json(new ApiResponse(200 , user, "Avatar image updated successfully!"))
 })
+//to get the channel and the subscribers
+const getUserChannelProfile=asyncHandler(async(req,res)=>{
+       const {username}=req.params;
+
+       if(!username?.trim()){
+        throw new ApiError(400 , "Username is missing");
+       }
+
+       //we'll apply aggregate pipeline
+       //first stage will be to filter out the users
+       const channel=await User.aggregate([
+        //first stage:filtering , we'll use match pipeline
+        {
+            $match:{
+                username:username
+            }
+        }, 
+        {
+            $lookup:{
+                from:"subscriptions",
+                localField:"_id",
+                foreignField:"channel",
+                as:"subscribers"
+
+            }
+        },
+        {
+            $lookup:{
+                from:"subscriptions",
+                localField:"_id",
+                foreignField:"subscriber",
+                as:"subscribedTo"
+
+            }
+        },
+        {
+            $addFields:{
+                subscriberCount:{
+                    $size:"$subscribers"
+                },
+                channelsSubscribedTo:{
+                    $size:"$subscribedTo"
+                }
+            }
+        } ,
+        {
+            $project:{
+                username:1,
+                fullName:1,
+                subscriberCount:1,
+                channelsSubscribedTo:1,
+                avatar:1,
+
+            }
+        }
+       ])
+
+       if(!channel){
+        throw new ApiError(404 , "Channel does not exist");
+       }
+
+       return res.status(200)
+       .json(
+        new ApiResponse(200 , channel[0]  , "User channel fetched successfully")
+       )
+
+
+
+
+
+})
 
 
 export {registerUser , loginUser , logoutUser , refreshAccessToken ,
-     changeCurrentPassword , currentUser , updateAvatar};
+     changeCurrentPassword , currentUser , updateAvatar, getUserChannelProfile};
 

@@ -255,6 +255,66 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
 })
 
 
+const changeCurrentPassword=asyncHandler(async(req , res)=>{
+     const {oldPassword, newPassword}=req.body;
 
-export {registerUser , loginUser , logoutUser , refreshAccessToken};
+     //since we're changing the password , we'll alredy be logged in 
+     //thus we'll get the user from the middleware , req.user=user
+     const user=User.findById(req.user._id);
+     if(!user){
+        throw new ApiError(401 , "Unauthorized access");
+     }
+
+     const correctPassowrd=await user.isCorrectPassword(oldPassword);
+     if(!correctPassowrd){
+        throw new ApiError(401 , "Incorrect passowrd");
+     }
+
+     user.password=newPassword;
+     await user.save({validateBeforeSave:false});
+
+     return res
+     .status(200)
+     .json(
+        new ApiResponse(200,
+            {},
+            "Pasoword changes succesfully!"
+        )
+     )
+})
+
+const currentUser=asyncHandler(async(req,res)=>{
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200 , req.user , "User fetched successfully!")
+    )
+})
+
+const updateAvatar=asyncHandler(async(req,res)=>{
+    const avatarLocalPath=req.file.path;
+    if(!avatarLocalPath){
+        throw new ApiError(400 , "Invalid file path");
+    }
+
+    const avatar=await uploadOnCloudinary(avatarLocalPath);
+
+    if(!avatar.url){
+        throw new ApiError(400 , "problem in uploading the file path");
+    }
+
+    //update the file
+    const user =await User.findByIdAndUpdate(
+        req.user._id,
+    { $set: {avatar:avatar.url}},
+    {new:true}).select("-password");
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200 , user, "Avatar image updated successfully!"))
+})
+
+
+export {registerUser , loginUser , logoutUser , refreshAccessToken ,
+     changeCurrentPassword , currentUser , updateAvatar};
 
